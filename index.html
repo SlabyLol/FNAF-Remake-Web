@@ -2,185 +2,202 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>FNAF: The Final Bite - ULTRA EDITION</title>
+    <title>FNAF: The Yellow Soul - Ultra</title>
     <style>
         :root { 
-            --freddy: #4b2e2e; --bonnie: #3b3b58; --bb: #ff5555; 
-            --yellow: #ffd700; --blood: #8a0000; --iron: #222;
+            --freddy: #5d3a1a; --bonnie: #3e3e5e; --bb: #d22; 
+            --yellow: #ffd700; --blood: #900; --metal: #2c2c2c;
         }
-        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; color: #fff; }
+        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; color: #eee; }
 
         /* --- MENÜ --- */
         #menu {
             position: fixed; width: 100%; height: 100%; background: #000; z-index: 10000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border: 10px double #400; box-sizing: border-box;
         }
-        .glitch { font-size: 4rem; color: #600; animation: flash 0.2s infinite; }
-        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .title { font-size: 4rem; color: #800; text-shadow: 0 0 20px #f00; animation: glitch 0.1s infinite; }
+        @keyframes glitch { 0% { transform: translate(2px,0); } 50% { transform: translate(-2px,1px); opacity: 0.8; } 100% { transform: translate(0,0); } }
 
         /* --- BÜRO --- */
-        #game-container { display: none; width: 100vw; height: 100vh; position: relative; }
+        #game-view { display: none; width: 100vw; height: 100vh; position: relative; }
         #office {
-            width: 1000px; height: 600px; margin: auto; background: #1a1a1a;
-            position: relative; border: 10px solid #333; overflow: hidden;
-            perspective: 1000px; box-shadow: inset 0 0 200px #000;
+            width: 1100px; height: 650px; margin: 20px auto; background: linear-gradient(to bottom, #151515, #000);
+            position: relative; border: 15px solid #222; overflow: hidden;
+            perspective: 1500px; box-shadow: inset 0 0 300px #000;
         }
 
-        /* TÜREN */
-        .door { position: absolute; width: 180px; height: 100%; background: #222; z-index: 20; transform: translateY(-100%); transition: 0.3s; border-bottom: 10px solid #111; }
+        /* TÜREN & FENSTER */
+        .door { position: absolute; width: 200px; height: 100%; background: var(--metal); z-index: 20; transform: translateY(-100%); transition: 0.25s ease-in; border-bottom: 20px solid #111; box-shadow: 0 0 50px #000; }
         .door.closed { transform: translateY(0); }
-        #door-l { left: 0; border-right: 5px solid #444; }
-        #door-r { right: 0; border-left: 5px solid #444; }
+        #door-l { left: 0; border-right: 8px solid #111; }
+        #door-r { right: 0; border-left: 8px solid #111; }
 
-        /* CHARAKTER (GELB MIT GLIEDERN) */
-        #player { position: absolute; bottom: 40px; left: 450px; z-index: 15; text-align: center; }
-        .p-head { width: 50px; height: 50px; background: var(--yellow); border-radius: 50%; margin: 0 auto; transition: 0.2s; border: 2px solid #000; }
-        .p-body { width: 70px; height: 80px; background: var(--yellow); border-radius: 15px; margin: -5px auto; }
-        .p-arm { width: 12px; height: 50px; background: var(--yellow); position: absolute; top: 55px; border-radius: 5px; }
+        /* DER GELBE CHARAKTER (VOLLE GLIEDER) */
+        #player { position: absolute; bottom: 60px; left: 480px; z-index: 15; width: 140px; }
+        #p-head { width: 60px; height: 60px; background: var(--yellow); border-radius: 50%; margin: 0 auto; border: 3px solid #000; position: relative; transition: 0.2s; }
+        .p-body { width: 90px; height: 120px; background: var(--yellow); border-radius: 25px; margin: -5px auto; border: 3px solid #000; position: relative; }
+        .p-limb { width: 15px; height: 70px; background: var(--yellow); position: absolute; border: 2px solid #000; border-radius: 10px; }
+        .arm-l { left: -15px; top: 10px; transform: rotate(15deg); }
+        .arm-r { right: -15px; top: 10px; transform: rotate(-15deg); }
 
-        /* ANIMATRONICS IM BÜRO */
-        .monster { position: absolute; bottom: 50px; width: 120px; height: 250px; display: none; z-index: 5; }
-        .m-head { width: 80px; height: 80px; border-radius: 20px; margin: 0 auto; position: relative; }
-        .m-body { width: 100px; height: 120px; border-radius: 30px; margin: 0 auto; }
-        .m-arm { width: 25px; height: 90px; position: absolute; top: 20px; border-radius: 10px; animation: move 1s infinite alternate; }
-        @keyframes move { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+        /* ANIMATRONICS (VOLLSTÄNDIG) */
+        .monster { position: absolute; bottom: 60px; width: 180px; height: 350px; display: none; z-index: 5; }
+        .m-head { width: 90px; height: 100px; border-radius: 30px; margin: 0 auto; position: relative; border: 4px solid #000; }
+        .m-body { width: 120px; height: 180px; border-radius: 40px; margin: 5px auto; border: 4px solid #000; position: relative; }
+        .m-limb { width: 30px; height: 110px; background: inherit; position: absolute; border: 3px solid #000; border-radius: 15px; }
 
-        /* MONITOR & KAMERAS */
+        /* MONITOR */
         #monitor {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #001; z-index: 100; display: none; border: 20px solid #333;
+            background: rgba(0,20,0,0.9); z-index: 100; display: none;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,255,0,0.05) 2px);
         }
-        .cam-btn { padding: 10px; background: #222; color: #0f0; border: 1px solid #0f0; cursor: pointer; margin: 5px; }
 
-        /* TODES-ANIMATIONEN */
+        /* JUMPSCARE & BISS */
         #scare-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999; display: none; justify-content: center; align-items: center;
         }
-        .big-face { width: 500px; height: 500px; border-radius: 50%; position: relative; animation: shake 0.05s infinite; }
-        .jaw { width: 300px; height: 150px; background: #000; position: absolute; bottom: 30px; left: 100px; border-radius: 0 0 150px 150px; border: 5px solid #fff; }
-
-        @keyframes shake { 0% { transform: translate(10px,10px) scale(1.1); } 50% { transform: translate(-10px,-10px) scale(1.1); } }
-        .blood { position: absolute; width: 15px; height: 15px; background: var(--blood); border-radius: 50%; opacity: 0; }
+        .scare-img { width: 600px; height: 600px; border-radius: 50%; position: relative; animation: intense-shake 0.05s infinite; }
+        @keyframes intense-shake { 0% { transform: translate(15px,15px) scale(1.3); } 50% { transform: translate(-15px,-15px) scale(1.3); } }
+        .blood-drop { position: absolute; width: 12px; height: 12px; background: var(--blood); border-radius: 50%; opacity: 0; pointer-events: none; }
 
         /* UI */
-        #hud { position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 200; }
-        .ui-btn { padding: 15px 30px; background: #111; color: #fff; border: 2px solid #555; cursor: pointer; margin: 0 10px; }
+        #hud { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 200; font-weight: bold; }
+        .btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid #555; cursor: pointer; font-family: 'Courier New'; font-size: 1rem; margin: 0 10px; }
+        .btn:hover { background: #400; border-color: #f00; }
     </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1 class="glitch">FIVE NIGHTS AT YELLOW'S</h1>
-    <button class="ui-btn" onclick="startGame()">NEUES SPIEL</button>
+    <h1 class="title">YELLOW SOUL: THE BITE</h1>
+    <button class="btn" style="font-size: 2rem;" onclick="initGame()">START NIGHT</button>
 </div>
 
-<div id="game-container">
+<div id="game-view">
     <div id="office">
         <div id="door-l" class="door"></div>
         <div id="door-r" class="door"></div>
 
-        <div id="bonnie" class="monster" style="left: 20px;">
-            <div class="m-head" style="background: var(--bonnie);"><div style="width:20px;height:50px;background:var(--bonnie);position:absolute;top:-40px;left:10px;"></div></div>
-            <div class="m-body" style="background: var(--bonnie);"><div class="m-arm" style="left:-15px;background:var(--bonnie);"></div></div>
+        <div id="bonnie" class="monster" style="left: 30px; background: var(--bonnie);">
+            <div class="m-head" style="background: inherit;">
+                <div style="width:20px;height:70px;background:inherit;position:absolute;top:-60px;left:10px;border:3px solid #000;border-radius:10px;"></div>
+                <div style="width:20px;height:70px;background:inherit;position:absolute;top:-60px;right:10px;border:3px solid #000;border-radius:10px;"></div>
+                <div style="width:15px;height:15px;background:red;border-radius:50%;position:absolute;top:30px;left:20px;box-shadow:0 0 15px red;"></div>
+                <div style="width:15px;height:15px;background:red;border-radius:50%;position:absolute;top:30px;right:20px;box-shadow:0 0 15px red;"></div>
+            </div>
+            <div class="m-body" style="background: inherit;">
+                <div class="m-limb" style="left:-35px; top:10px; transform:rotate(20deg);"></div>
+                <div class="m-limb" style="right:-35px; top:10px; transform:rotate(-20deg);"></div>
+            </div>
         </div>
 
-        <div id="freddy" class="monster" style="right: 20px;">
-            <div class="m-head" style="background: var(--freddy);"><div style="width:40px;height:20px;background:#000;position:absolute;top:-20px;left:20px;"></div></div>
-            <div class="m-body" style="background: var(--freddy);"><div class="m-arm" style="right:-15px;background:var(--freddy);"></div></div>
-        </div>
-
-        <div id="bb" class="monster" style="left: 200px; bottom: 100px; transform: scale(0.6);">
-            <div class="m-head" style="background: #ffccaa;"><div style="width:50px;height:10px;background:red;position:absolute;top:-10px;left:5px;"></div></div>
-            <div class="m-body" style="background: var(--bb);"></div>
+        <div id="freddy" class="monster" style="right: 30px; background: var(--freddy);">
+            <div class="m-head" style="background: inherit;">
+                <div style="width:50px;height:30px;background:#111;position:absolute;top:-30px;left:20px;border-radius:5px;"></div>
+                <div style="width:12px;height:12px;background:#fff;border-radius:50%;position:absolute;top:35px;left:20px;box-shadow:0 0 15px #fff;"></div>
+                <div style="width:12px;height:12px;background:#fff;border-radius:50%;position:absolute;top:35px;right:20px;box-shadow:0 0 15px #fff;"></div>
+            </div>
+            <div class="m-body" style="background: inherit;">
+                <div class="m-limb" style="left:-35px; top:10px; transform:rotate(10deg);"></div>
+                <div class="m-limb" style="right:-35px; top:10px; transform:rotate(-10deg);"></div>
+            </div>
         </div>
 
         <div id="player">
-            <div id="p-head" class="p-head"></div>
-            <div class="p-body"></div>
-            <div class="p-arm" style="left:-15px;"></div>
-            <div class="p-arm" style="right:-15px;"></div>
+            <div id="p-head"></div>
+            <div class="p-body">
+                <div class="p-limb arm-l"></div>
+                <div class="p-limb arm-r"></div>
+            </div>
         </div>
 
-        <div style="position:absolute; bottom:0; width:100%; height:120px; background:#222; border-top:5px solid #333; z-index:10;"></div>
+        <div style="position:absolute; bottom:0; width:100%; height:140px; background:#1a1a1a; border-top:8px solid #333; z-index:12;"></div>
     </div>
 
     <div id="monitor">
-        <h1 style="color:#0f0; text-align:center;">KAMERA SYSTEM</h1>
-        <div style="text-align:center; margin-top:100px;">
-            <button class="cam-btn" onclick="toggleCam()">BÜRO ZURÜCK</button>
-            <p>CAM 1: STAGE | CAM 2: FLUR</p>
+        <h2 style="color:#0f0; text-align:center; letter-spacing: 5px;">LIVE FEED - CAM 01</h2>
+        <div style="text-align:center; margin-top:150px;">
+            <button class="btn" onclick="toggleCam()">BACK TO OFFICE</button>
         </div>
     </div>
 
     <div id="hud">
-        <button class="ui-btn" onclick="toggleDoor('l')">TÜR L (A-Taste)</button>
-        <button class="ui-btn" onclick="toggleCam()">MONITOR (M-Taste)</button>
-        <button class="ui-btn" onclick="toggleDoor('r')">TÜR R (L-Taste)</button>
-        <p>STROM: <span id="pwr">100</span>% | ZEIT: <span id="tm">12</span> AM</p>
+        <button class="btn" onclick="toggleDoor('l')">DOOR L (A)</button>
+        <button class="btn" onclick="toggleCam()">MONITOR (SPACE)</button>
+        <button class="btn" onclick="toggleDoor('r')">DOOR R (D)</button>
+        <div style="margin-top:10px; font-size:1.4rem;">
+            POWER: <span id="pwr-val" style="color:#0f0">100</span>% | TIME: <span id="tm-val">12</span> AM
+        </div>
     </div>
 </div>
 
 <div id="scare-layer">
-    <div id="face" class="big-face">
-        <div class="jaw"></div>
-        <div style="width:40px;height:40px;background:red;border-radius:50%;position:absolute;top:150px;left:100px;"></div>
-        <div style="width:40px;height:40px;background:red;border-radius:50%;position:absolute;top:150px;right:100px;"></div>
+    <div id="scare-face" class="scare-img">
+        <div style="width:400px; height:180px; background:#000; position:absolute; bottom:40px; left:100px; border-radius:0 0 200px 200px; border:8px solid #fff;"></div>
+        <div style="width:60px;height:60px;background:white;border-radius:50%;position:absolute;top:150px;left:120px;box-shadow:0 0 40px red;"></div>
+        <div style="width:60px;height:60px;background:white;border-radius:50%;position:absolute;top:150px;right:120px;box-shadow:0 0 40px red;"></div>
     </div>
 </div>
 
 <script>
-    let pwr = 100, time = 12, gameActive = false;
+    let power = 100, time = 12, gameRunning = false;
     let doorL = false, doorR = false, camOpen = false;
-    let monsterPos = { bonnie: 0, freddy: 0, bb: 0 };
+    let aiPositions = { bonnie: 0, freddy: 0 }; // 0: Weg, 1: An der Tür
 
-    function startGame() {
+    function initGame() {
         document.getElementById('menu').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
-        gameActive = true;
-        gameLoop();
+        document.getElementById('game-view').style.display = 'block';
+        gameRunning = true;
+        mainLoop();
     }
 
-    function gameLoop() {
+    function mainLoop() {
         setInterval(() => {
-            if (!gameActive) return;
-            // Strom & Zeit
-            pwr -= (doorL || doorR ? 0.4 : 0.1);
-            document.getElementById('pwr').innerText = Math.floor(pwr);
-            if (pwr <= 0) die("STROM AUS");
+            if (!gameRunning) return;
 
-            if (Math.random() > 0.99) {
+            // Strom & Zeit
+            power -= (doorL || doorR ? 0.4 : 0.15) + (camOpen ? 0.2 : 0);
+            document.getElementById('pwr-val').innerText = Math.floor(power);
+            if (power <= 0) triggerDeath('freddy', 'OUT OF POWER');
+
+            if (Math.random() > 0.98) {
                 time = time === 12 ? 1 : time + 1;
-                document.getElementById('tm').innerText = time;
-                if (time === 6) { alert("DU HAST ÜBERLEBT!"); location.reload(); }
+                document.getElementById('tm-val').innerText = time;
+                if (time === 6) win();
             }
 
-            // Monster Bewegung
-            if (Math.random() > 0.9) monsterPos.bonnie = 1;
-            if (Math.random() > 0.9) monsterPos.freddy = 1;
-            if (Math.random() > 0.95) monsterPos.bb = 1;
+            // AI Bewegung
+            if (Math.random() > 0.93 && aiPositions.bonnie === 0) moveAI('bonnie');
+            if (Math.random() > 0.93 && aiPositions.freddy === 0) moveAI('freddy');
 
-            updateMonsters();
         }, 1000);
     }
 
-    function updateMonsters() {
-        document.getElementById('bonnie').style.display = monsterPos.bonnie ? 'block' : 'none';
-        document.getElementById('freddy').style.display = monsterPos.freddy ? 'block' : 'none';
-        document.getElementById('bb').style.display = monsterPos.bb ? 'block' : 'none';
-
-        if (monsterPos.bonnie && !doorL) setTimeout(() => checkKill('bonnie', doorL), 3000);
-        if (monsterPos.freddy && !doorR) setTimeout(() => checkKill('freddy', doorR), 3000);
-        if (monsterPos.bb && !camOpen) pwr -= 2; // BB klaut Strom
-    }
-
-    function checkKill(type, door) {
-        if (!door && monsterPos[type] && gameActive) triggerBite(type);
+    function moveAI(monster) {
+        aiPositions[monster] = 1;
+        document.getElementById(monster).style.display = 'block';
+        
+        // Timer bis zum Angriff (3-5 Sekunden)
+        setTimeout(() => {
+            if (!gameRunning) return;
+            if (monster === 'bonnie' && !doorL) triggerDeath('bonnie');
+            if (monster === 'freddy' && !doorR) triggerDeath('freddy');
+        }, 4000);
     }
 
     function toggleDoor(side) {
-        if (side === 'l') { doorL = !doorL; document.getElementById('door-l').classList.toggle('closed'); if(doorL) monsterPos.bonnie = 0; }
-        if (side === 'r') { doorR = !doorR; document.getElementById('door-r').classList.toggle('closed'); if(doorR) monsterPos.freddy = 0; }
+        if (side === 'l') { 
+            doorL = !doorL; 
+            document.getElementById('door-l').classList.toggle('closed');
+            if (doorL) { aiPositions.bonnie = 0; document.getElementById('bonnie').style.display = 'none'; }
+        } else {
+            doorR = !doorR;
+            document.getElementById('door-r').classList.toggle('closed');
+            if (doorR) { aiPositions.freddy = 0; document.getElementById('freddy').style.display = 'none'; }
+        }
     }
 
     function toggleCam() {
@@ -188,39 +205,51 @@
         document.getElementById('monitor').style.display = camOpen ? 'block' : 'none';
     }
 
-    function triggerBite(monster) {
-        gameActive = false;
-        // Phase 1: Biss am Schreibtisch
-        const pHead = document.getElementById('p-head');
-        pHead.style.transform = "translateY(-50px) rotate(20deg)";
-        pHead.style.background = "red";
+    function triggerDeath(monster, reason = "") {
+        gameRunning = false;
+        const head = document.getElementById('p-head');
         
-        // Blut-Effekt
-        for(let i=0; i<20; i++) {
-            let b = document.createElement('div');
-            b.className = 'blood';
-            b.style.left = "500px"; b.style.top = "500px";
-            b.style.opacity = "1";
-            document.body.appendChild(b);
-            let x = (Math.random()-0.5)*400, y = (Math.random()-0.5)*400;
-            b.animate([{transform: 'translate(0,0)'}, {transform: `translate(${x}px, ${y}px)`}], 500);
+        // PHASE 1: Der Biss
+        head.style.transform = "translateY(-80px) rotate(45deg) scale(0.5)";
+        head.style.backgroundColor = "var(--blood)";
+        
+        // Blut-Partikel
+        for(let i=0; i<50; i++) {
+            let p = document.createElement('div');
+            p.className = 'blood-drop';
+            p.style.left = "540px"; p.style.top = "500px";
+            p.style.opacity = "1";
+            document.body.appendChild(p);
+            let tx = (Math.random()-0.5)*600, ty = (Math.random()-0.5)*600;
+            p.animate([{transform: 'translate(0,0)'}, {transform: `translate(${tx}px, ${ty}px)`}], 800);
         }
 
-        // Phase 2: Vollbild Jumpscare
+        // PHASE 2: Jumpscare
         setTimeout(() => {
-            document.getElementById('scare-layer').style.display = 'flex';
-            document.getElementById('face').style.background = monster === 'bonnie' ? 'var(--bonnie)' : 'var(--freddy)';
-            setTimeout(() => { location.reload(); }, 2000);
-        }, 500);
+            const layer = document.getElementById('scare-layer');
+            const face = document.getElementById('scare-face');
+            layer.style.display = 'flex';
+            face.style.backgroundColor = monster === 'bonnie' ? 'var(--bonnie)' : 'var(--freddy)';
+            
+            setTimeout(() => {
+                alert("THE BITE OF '26. GAME OVER.");
+                location.reload();
+            }, 2000);
+        }, 600);
     }
 
-    function die(msg) { alert(msg); location.reload(); }
+    function win() {
+        gameRunning = false;
+        alert("6 AM. YOU SURVIVED!");
+        location.reload();
+    }
 
-    // Steuerung
+    // Keyboard Steuerung
     window.addEventListener('keydown', (e) => {
-        if(e.key === 'a') toggleDoor('l');
-        if(e.key === 'l') toggleDoor('r');
-        if(e.key === 'm') toggleCam();
+        if (!gameRunning) return;
+        if (e.key === 'a' || e.key === 'A') toggleDoor('l');
+        if (e.key === 'd' || e.key === 'D') toggleDoor('r');
+        if (e.code === 'Space') toggleCam();
     });
 </script>
 </body>
