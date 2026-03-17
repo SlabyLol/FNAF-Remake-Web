@@ -2,216 +2,184 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>FNAF: The Web Nightmare</title>
+    <title>FNAF: The Yellow Survivor</title>
     <style>
-        :root { --metal: #1a1a1b; --rust: #3d2b1f; --glow: #ff0000; }
-        body { background: #000; margin: 0; overflow: hidden; font-family: 'Arial Black', sans-serif; color: #fff; }
+        :root { --freddy: #4b2e2e; --yellow-guy: #ffd700; }
+        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; color: #fff; }
 
-        #stage { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; background: #050505; }
+        /* --- MENÜ --- */
+        #menu {
+            position: fixed; width: 100%; height: 100%; background: #000;
+            z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .title { font-size: 4rem; color: #600; text-shadow: 2px 2px #300; animation: flicker 0.1s infinite; }
+        @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 0.9; } }
 
-        /* --- DAS GRUSELIGE BÜRO --- */
+        /* --- BÜRO & CHARAKTER --- */
+        #game-screen { display: none; width: 100vw; height: 100vh; position: relative; }
         #office {
-            width: 1000px; height: 600px; background: #0a0a0a;
-            position: relative; border: 15px solid #111;
-            perspective: 1200px; overflow: hidden;
-            box-shadow: inset 0 0 300px #000;
+            width: 1000px; height: 600px; background: #1a1a1a; margin: auto;
+            position: relative; overflow: hidden; border: 10px solid #333;
+            perspective: 1000px; box-shadow: inset 0 0 100px #000;
         }
 
-        .wall-left { position: absolute; width: 300px; height: 100%; left: -100px; transform: rotateY(60deg); background: linear-gradient(90deg, #000, #151515); border-right: 5px solid #222; }
-        .wall-right { position: absolute; width: 300px; height: 100%; right: -100px; transform: rotateY(-60deg); background: linear-gradient(-90deg, #000, #151515); border-left: 5px solid #222; }
-
-        /* --- DER ANIMATRONIC (DETAILLIERT) --- */
-        #freddy {
-            position: absolute; bottom: 50px; left: 80px; width: 150px; height: 350px;
-            display: none; z-index: 5; filter: brightness(0.3); transition: filter 0.2s;
+        #desk {
+            position: absolute; bottom: 0; width: 500px; height: 120px;
+            left: 250px; background: #333; border-top: 5px solid #444; z-index: 20;
         }
-        .head { width: 80px; height: 80px; background: #3d2b1f; border-radius: 20px; margin: 0 auto; position: relative; border: 2px solid #222; }
-        .eye { width: 12px; height: 12px; background: #fff; border-radius: 50%; position: absolute; top: 25px; box-shadow: 0 0 10px #ff0000; }
-        .jaw { width: 70px; height: 30px; background: #2b1d14; position: absolute; bottom: -5px; left: 5px; border-radius: 0 0 10px 10px; }
-        .body-main { width: 110px; height: 150px; background: #3d2b1f; border-radius: 40px; margin: 5px auto; }
 
-        /* --- TÜREN --- */
-        .door-frame { position: absolute; top: 0; width: 160px; height: 100%; background: #000; z-index: 10; }
-        #door-l-frame { left: 0; }
-        #door-l { width: 100%; height: 100%; background: #222; transform: translateY(-100%); transition: transform 0.3s ease-in; border-bottom: 10px solid #444; }
-        #door-l.closed { transform: translateY(0); }
+        /* Der gelbe Charakter (Sicht von hinten) */
+        #player {
+            position: absolute; bottom: 40px; left: 450px; width: 100px; height: 130px; z-index: 25;
+        }
+        .p-head { width: 50px; height: 50px; background: var(--yellow-guy); border-radius: 50%; margin: 0 auto; position: relative; }
+        .p-body { width: 70px; height: 80px; background: var(--yellow-guy); border-radius: 20px 20px 0 0; margin: -5px auto; }
 
-        /* --- MONITOR --- */
+        /* --- FREDDY AN DER TÜR --- */
+        #freddy-door {
+            position: absolute; left: 20px; bottom: 100px; width: 140px; height: 300px;
+            display: none; z-index: 5;
+        }
+
+        /* --- KAMERA: SHOW STAGE --- */
         #monitor {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #001; z-index: 100; display: none;
-            background-image: repeating-linear-gradient(0deg, #000 0px, #000 1px, transparent 2px);
+            background: #050505; z-index: 100; display: none;
         }
-        .static { position: absolute; width: 100%; height: 100%; background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Static_tv.gif'); opacity: 0.1; }
-
-        /* --- KRANKER JUMPSCARE --- */
-        #scare-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 9999; display: none;
-            justify-content: center; align-items: center;
+        .stage-curtain { width: 100%; height: 100%; border: 20px solid #400; background: #111; position: relative; }
+        #stage-freddy {
+            width: 100px; height: 200px; background: var(--freddy);
+            position: absolute; left: 45%; top: 30%; border-radius: 20px;
         }
-        .scare-face {
-            width: 400px; height: 400px; background: #3d2b1f; border-radius: 50%;
-            position: relative; animation: shake 0.05s infinite, zoomIn 0.2s forwards;
+
+        /* --- ANIMATIONEN --- */
+        .bite-anim { animation: bite 0.5s forwards; }
+        @keyframes bite {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5) translateY(-50px); filter: sepia(1) saturate(5); }
+            100% { opacity: 0; }
         }
-        .scare-eye { width: 80px; height: 80px; background: red; border-radius: 50%; position: absolute; top: 80px; box-shadow: 0 0 50px red; }
-        .scare-mouth { width: 200px; height: 100px; background: #000; position: absolute; bottom: 50px; left: 100px; border-radius: 0 0 100px 100px; border: 5px solid #fff; }
 
-        @keyframes shake { 0% { transform: translate(5px, 5px); } 50% { transform: translate(-5px, -5px); } 100% { transform: translate(0, 0); } }
-        @keyframes zoomIn { from { transform: scale(0.1); } to { transform: scale(2.5); } }
-        @keyframes flash { 0% { background: #fff; } 10% { background: #000; } 20% { background: #400; } }
-
-        /* --- 6 AM SCREEN --- */
-        #win-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000;
-            z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center;
+        #scare-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: red; display:none; z-index:99999;
+            justify-content:center; align-items:center; font-size: 5rem;
         }
-        .win-text { font-size: 8rem; color: #fff; text-shadow: 0 0 20px #0f0; animation: winPop 1s ease-out; }
-        @keyframes winPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* --- UI --- */
-        #hud { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 30px; z-index: 200; }
-        .control-btn { padding: 15px 40px; background: #111; border: 2px solid #333; color: #aaa; cursor: pointer; border-radius: 5px; }
-        .control-btn:hover { background: #333; color: #fff; }
-        #power-box { position: absolute; top: 20px; left: 20px; font-size: 1.5rem; color: #f00; }
+        /* --- TÜREN --- */
+        .door { position: absolute; left: 0; width: 180px; height: 100%; background: #222; z-index: 30; transition: 0.3s; transform: translateY(-100%); }
+        .door.closed { transform: translateY(0); }
+
+        .btn { padding: 15px 30px; background: #111; border: 2px solid #600; color: #fff; cursor: pointer; margin: 10px; }
     </style>
 </head>
 <body>
 
-<div id="stage">
+<div id="menu">
+    <h1 class="title">FIVE NIGHTS AT YELLOW'S</h1>
+    <button class="btn" onclick="startGame()">NEW GAME</button>
+</div>
+
+<div id="game-screen">
     <div id="office">
-        <div class="wall-left"></div>
-        <div class="wall-right"></div>
+        <div id="door-l" class="door"></div>
         
-        <div id="door-l-frame" class="door-frame">
-            <div id="door-l"></div>
-        </div>
-
-        <div id="freddy">
-            <div class="head">
-                <div class="eye" style="left: 15px;"></div>
-                <div class="eye" style="right: 15px;"></div>
-                <div class="jaw"></div>
+        <div id="freddy-door">
+            <div style="width:70px; height:70px; background:var(--freddy); border-radius:15px; margin:auto;">
+                <div style="width:10px; height:10px; background:red; border-radius:50%; display:inline-block; margin:20px 5px;"></div>
+                <div style="width:10px; height:10px; background:red; border-radius:50%; display:inline-block; margin:20px 5px;"></div>
             </div>
-            <div class="body-main"></div>
+            <div style="width:100px; height:150px; background:var(--freddy); border-radius:30px; margin:auto;"></div>
         </div>
 
-        <div id="power-box">POWER: <span id="p-val">100</span>%</div>
+        <div id="player">
+            <div id="player-head" class="p-head"></div>
+            <div class="p-body"></div>
+        </div>
+        
+        <div id="desk"></div>
     </div>
 
     <div id="monitor">
-        <div class="static"></div>
-        <h1 style="color:red; padding: 20px;">CAM 2A: WEST HALL</h1>
-        <div id="cam-status" style="text-align:center; margin-top:150px; font-size:2rem;">STAGE: OCCUPIED</div>
+        <div class="stage-curtain">
+            <h2 style="text-align:center; color:white;">CAM 01: SHOW STAGE</h2>
+            <div id="stage-freddy"></div>
+        </div>
     </div>
 
-    <div id="hud">
-        <button class="control-btn" onclick="toggleDoor()">TÜR</button>
-        <button class="control-btn" onclick="toggleMonitor()">MONITOR</button>
-        <div style="font-size: 1.5rem; padding-top: 10px;">ZEIT: <span id="time-val">12</span> AM</div>
-    </div>
-</div>
-
-<div id="scare-layer">
-    <div class="scare-face">
-        <div class="scare-eye" style="left: 60px;"></div>
-        <div class="scare-eye" style="right: 60px;"></div>
-        <div class="scare-mouth"></div>
+    <div style="position:fixed; bottom:20px; width:100%; text-align:center;">
+        <button class="btn" onclick="toggleDoor()">TÜR</button>
+        <button class="btn" onclick="toggleCam()">MONITOR</button>
+        <span id="stat-info">POWER: 100% | 12 AM</span>
     </div>
 </div>
 
-<div id="win-screen">
-    <div class="win-text">5 AM</div>
-    <div class="win-text" id="six" style="display:none; color:#0f0;">6 AM</div>
-</div>
+<div id="scare-overlay"><h1>WASTED!</h1></div>
 
 <script>
     let pwr = 100;
     let time = 12;
-    let doorOpen = true;
-    let monitorOpen = false;
-    let freddyStage = 0; // 0=Stage, 1=Hall, 2=Door, 3=Attack
+    let doorClosed = false;
+    let camOpen = false;
+    let freddyAtDoor = false;
+    let reactionTimer = 0;
 
-    // Gameplay Loop
-    const loop = setInterval(() => {
-        // Stromverbrauch
-        pwr -= (0.04 + (!doorOpen ? 0.2 : 0) + (monitorOpen ? 0.15 : 0));
-        document.getElementById('p-val').innerText = Math.floor(pwr);
-        if(pwr <= 0) die("STROM AUSFALL");
+    function startGame() {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        gameLoop();
+    }
 
-        // Zeit (Jede Minute eine Stunde)
-        if(Math.random() > 0.99) {
-            if(time === 12) time = 1; else time++;
-            document.getElementById('time-val').innerText = time;
-            if(time === 6) winGame();
-        }
-    }, 500);
+    function gameLoop() {
+        setInterval(() => {
+            // Strom & Zeit
+            pwr -= (doorClosed ? 0.3 : 0.1);
+            document.getElementById('stat-info').innerText = `POWER: ${Math.floor(pwr)}% | ${time} AM`;
+            if(pwr <= 0) location.reload();
 
-    // AI Bewegung
-    setInterval(() => {
-        if(Math.random() > 0.6) {
-            freddyStage++;
-            updateAI();
-        }
-    }, 6000);
-
-    function updateAI() {
-        const freddy = document.getElementById('freddy');
-        const camStatus = document.getElementById('cam-status');
-
-        if(freddyStage === 1) camStatus.innerText = "STAGE: EMPTY - SOMETHING IS IN THE HALL";
-        if(freddyStage === 2) {
-            freddy.style.display = 'block';
-            freddy.style.filter = 'brightness(0.1)';
-        }
-        if(freddyStage === 3) {
-            if(!doorOpen) {
-                freddyStage = 0;
-                freddy.style.display = 'none';
-                camStatus.innerText = "STAGE: OCCUPIED";
-            } else {
-                triggerJumpscare();
+            // Freddy Mechanik
+            if(Math.random() > 0.95 && !freddyAtDoor) {
+                freddyAtDoor = true;
+                document.getElementById('stage-freddy').style.display = 'none';
+                document.getElementById('freddy-door').style.display = 'block';
             }
-        }
+
+            // DER TODES-CHECK (2 Sekunden)
+            if(freddyAtDoor && !doorClosed) {
+                reactionTimer++;
+                if(reactionTimer >= 4) { // 4 Ticks = ca. 2 Sekunden
+                    triggerDeath();
+                }
+            } else {
+                reactionTimer = 0;
+            }
+        }, 500);
+    }
+
+    function triggerDeath() {
+        // Kopf-Abbeiß Animation
+        document.getElementById('player-head').classList.add('bite-anim');
+        
+        setTimeout(() => {
+            document.getElementById('scare-overlay').style.display = 'flex';
+            document.body.style.animation = "flicker 0.05s infinite";
+            setTimeout(() => location.reload(), 2000);
+        }, 500);
     }
 
     function toggleDoor() {
-        doorOpen = !doorOpen;
+        doorClosed = !doorClosed;
         document.getElementById('door-l').classList.toggle('closed');
+        if(doorClosed && freddyAtDoor) {
+            freddyAtDoor = false;
+            document.getElementById('freddy-door').style.display = 'none';
+            document.getElementById('stage-freddy').style.display = 'block';
+        }
     }
 
-    function toggleMonitor() {
-        monitorOpen = !monitorOpen;
-        document.getElementById('monitor').style.display = monitorOpen ? 'block' : 'none';
-    }
-
-    function triggerJumpscare() {
-        clearInterval(loop);
-        document.body.style.animation = "flash 0.1s infinite";
-        document.getElementById('scare-layer').style.display = 'flex';
-        // Simulierter Schrei-Effekt (Vibration)
-        if (window.navigator.vibrate) window.navigator.vibrate([500, 100, 500]);
-        
-        setTimeout(() => {
-            alert("ER HAT DICH ERWISCHT.");
-            location.reload();
-        }, 1500);
-    }
-
-    function die(reason) {
-        alert(reason);
-        location.reload();
-    }
-
-    function winGame() {
-        clearInterval(loop);
-        const ws = document.getElementById('win-screen');
-        ws.style.display = 'flex';
-        setTimeout(() => {
-            document.querySelector('.win-text').style.display = 'none';
-            document.getElementById('six').style.display = 'block';
-        }, 2000);
-        setTimeout(() => location.reload(), 7000);
+    function toggleCam() {
+        camOpen = !camOpen;
+        document.getElementById('monitor').style.display = camOpen ? 'block' : 'none';
     }
 </script>
 </body>
