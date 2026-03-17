@@ -2,184 +2,200 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>FNAF: The Yellow Survivor</title>
+    <title>FNAF: The Final Bite</title>
     <style>
-        :root { --freddy: #4b2e2e; --yellow-guy: #ffd700; }
-        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; color: #fff; }
+        :root { --freddy: #4b2e2e; --yellow: #ffd700; --blood: #8a0000; }
+        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; }
 
         /* --- MENÜ --- */
         #menu {
             position: fixed; width: 100%; height: 100%; background: #000;
             z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border: 20px double #200; box-sizing: border-box;
         }
-        .title { font-size: 4rem; color: #600; text-shadow: 2px 2px #300; animation: flicker 0.1s infinite; }
-        @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 0.9; } }
+        .title { font-size: 5rem; color: #800; text-shadow: 0 0 20px red; animation: glitch 0.2s infinite; }
+        @keyframes glitch { 0% { transform: skew(2deg); } 50% { transform: skew(-2deg); opacity: 0.8; } 100% { transform: skew(0); } }
 
-        /* --- BÜRO & CHARAKTER --- */
-        #game-screen { display: none; width: 100vw; height: 100vh; position: relative; }
+        /* --- BÜRO --- */
+        #game-view { display: none; width: 100vw; height: 100vh; position: relative; background: #111; }
         #office {
-            width: 1000px; height: 600px; background: #1a1a1a; margin: auto;
-            position: relative; overflow: hidden; border: 10px solid #333;
-            perspective: 1000px; box-shadow: inset 0 0 100px #000;
+            width: 1000px; height: 600px; margin: auto; position: relative;
+            background: linear-gradient(to bottom, #1a1a1a, #050505);
+            border: 10px solid #222; overflow: hidden;
         }
 
-        #desk {
-            position: absolute; bottom: 0; width: 500px; height: 120px;
-            left: 250px; background: #333; border-top: 5px solid #444; z-index: 20;
-        }
-
-        /* Der gelbe Charakter (Sicht von hinten) */
+        /* Gelber Charakter von hinten */
         #player {
-            position: absolute; bottom: 40px; left: 450px; width: 100px; height: 130px; z-index: 25;
+            position: absolute; bottom: 50px; left: 450px; width: 120px; height: 150px; z-index: 10;
         }
-        .p-head { width: 50px; height: 50px; background: var(--yellow-guy); border-radius: 50%; margin: 0 auto; position: relative; }
-        .p-body { width: 70px; height: 80px; background: var(--yellow-guy); border-radius: 20px 20px 0 0; margin: -5px auto; }
+        .p-head { width: 60px; height: 60px; background: var(--yellow); border-radius: 50%; margin: 0 auto; position: relative; }
+        .p-body { width: 90px; height: 100px; background: var(--yellow); border-radius: 20px 20px 0 0; margin: -5px auto; }
 
         /* --- FREDDY AN DER TÜR --- */
         #freddy-door {
-            position: absolute; left: 20px; bottom: 100px; width: 140px; height: 300px;
+            position: absolute; left: 0; bottom: 50px; width: 250px; height: 400px;
             display: none; z-index: 5;
         }
+        .freddy-head { width: 120px; height: 100px; background: var(--freddy); border-radius: 30px; position: relative; }
+        .freddy-jaw { width: 120px; height: 40px; background: #2b1d14; position: absolute; bottom: -20px; border-radius: 0 0 20px 20px; transition: 0.1s; }
 
-        /* --- KAMERA: SHOW STAGE --- */
-        #monitor {
+        /* --- JUMPSCARE ANIMATION --- */
+        #jumpscare-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #050505; z-index: 100; display: none;
+            display: none; z-index: 1000; justify-content: center; align-items: center;
+            background: #000;
         }
-        .stage-curtain { width: 100%; height: 100%; border: 20px solid #400; background: #111; position: relative; }
-        #stage-freddy {
-            width: 100px; height: 200px; background: var(--freddy);
-            position: absolute; left: 45%; top: 30%; border-radius: 20px;
-        }
-
-        /* --- ANIMATIONEN --- */
-        .bite-anim { animation: bite 0.5s forwards; }
-        @keyframes bite {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5) translateY(-50px); filter: sepia(1) saturate(5); }
-            100% { opacity: 0; }
+        .attacker { position: relative; transform: scale(3); }
+        .bite-top { width: 100px; height: 60px; background: var(--freddy); border-radius: 30px 30px 0 0; }
+        .bite-bottom { width: 100px; height: 40px; background: #2b1d14; border-radius: 0 0 20px 20px; transform-origin: top; }
+        
+        .blood-drop {
+            position: absolute; width: 10px; height: 10px; background: var(--blood);
+            border-radius: 50%; opacity: 0;
         }
 
-        #scare-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: red; display:none; z-index:99999;
-            justify-content:center; align-items:center; font-size: 5rem;
+        @keyframes bite-action {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-30px) scale(1.2); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes spray {
+            0% { transform: translate(0,0); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)); opacity: 0; }
         }
 
-        /* --- TÜREN --- */
-        .door { position: absolute; left: 0; width: 180px; height: 100%; background: #222; z-index: 30; transition: 0.3s; transform: translateY(-100%); }
+        /* --- TÜR & UI --- */
+        .door { position: absolute; left: 0; width: 200px; height: 100%; background: #333; z-index: 20; transform: translateY(-100%); transition: 0.2s; border-right: 5px solid #111; }
         .door.closed { transform: translateY(0); }
-
-        .btn { padding: 15px 30px; background: #111; border: 2px solid #600; color: #fff; cursor: pointer; margin: 10px; }
+        #ui { position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; }
+        .btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid red; cursor: pointer; font-family: 'Courier New'; }
     </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1 class="title">FIVE NIGHTS AT YELLOW'S</h1>
-    <button class="btn" onclick="startGame()">NEW GAME</button>
+    <h1 class="title">THE BITE OF '26</h1>
+    <button class="btn" onclick="initGame()">START NIGHT</button>
 </div>
 
-<div id="game-screen">
+<div id="game-view">
     <div id="office">
         <div id="door-l" class="door"></div>
         
         <div id="freddy-door">
-            <div style="width:70px; height:70px; background:var(--freddy); border-radius:15px; margin:auto;">
-                <div style="width:10px; height:10px; background:red; border-radius:50%; display:inline-block; margin:20px 5px;"></div>
-                <div style="width:10px; height:10px; background:red; border-radius:50%; display:inline-block; margin:20px 5px;"></div>
+            <div class="freddy-head">
+                <div style="width:15px; height:15px; background:red; border-radius:50%; position:absolute; top:30px; left:20px; box-shadow: 0 0 10px red;"></div>
+                <div style="width:15px; height:15px; background:red; border-radius:50%; position:absolute; top:30px; right:20px; box-shadow: 0 0 10px red;"></div>
+                <div class="freddy-jaw" id="jaw"></div>
             </div>
-            <div style="width:100px; height:150px; background:var(--freddy); border-radius:30px; margin:auto;"></div>
         </div>
 
         <div id="player">
-            <div id="player-head" class="p-head"></div>
+            <div id="p-head" class="p-head"></div>
             <div class="p-body"></div>
         </div>
-        
-        <div id="desk"></div>
     </div>
 
-    <div id="monitor">
-        <div class="stage-curtain">
-            <h2 style="text-align:center; color:white;">CAM 01: SHOW STAGE</h2>
-            <div id="stage-freddy"></div>
+    <div id="jumpscare-container">
+        <div class="attacker" id="attacker">
+            <div class="bite-top"></div>
+            <div id="blood-box"></div>
+            <div class="bite-bottom" id="bottom-jaw"></div>
         </div>
     </div>
 
-    <div style="position:fixed; bottom:20px; width:100%; text-align:center;">
-        <button class="btn" onclick="toggleDoor()">TÜR</button>
-        <button class="btn" onclick="toggleCam()">MONITOR</button>
-        <span id="stat-info">POWER: 100% | 12 AM</span>
+    <div id="ui">
+        <button class="btn" onclick="toggleDoor()">TÜR ZU/AUF</button>
+        <div style="color:white; font-size:1.5rem;">POWER: <span id="pwr-val">100</span>% | TIME: <span id="time-val">12</span> AM</div>
     </div>
 </div>
-
-<div id="scare-overlay"><h1>WASTED!</h1></div>
 
 <script>
     let pwr = 100;
     let time = 12;
-    let doorClosed = false;
-    let camOpen = false;
-    let freddyAtDoor = false;
-    let reactionTimer = 0;
+    let isDoorClosed = false;
+    let freddyState = 0; // 0: Weg, 1: An der Tür
+    let biteTimer = 0;
 
-    function startGame() {
+    function initGame() {
         document.getElementById('menu').style.display = 'none';
-        document.getElementById('game-screen').style.display = 'block';
-        gameLoop();
+        document.getElementById('game-view').style.display = 'flex';
+        runLogic();
     }
 
-    function gameLoop() {
+    function runLogic() {
         setInterval(() => {
             // Strom & Zeit
-            pwr -= (doorClosed ? 0.3 : 0.1);
-            document.getElementById('stat-info').innerText = `POWER: ${Math.floor(pwr)}% | ${time} AM`;
+            pwr -= (isDoorClosed ? 0.4 : 0.1);
+            document.getElementById('pwr-val').innerText = Math.floor(pwr);
             if(pwr <= 0) location.reload();
 
-            // Freddy Mechanik
-            if(Math.random() > 0.95 && !freddyAtDoor) {
-                freddyAtDoor = true;
-                document.getElementById('stage-freddy').style.display = 'none';
+            // Freddy erscheint zufällig
+            if(Math.random() > 0.96 && freddyState === 0) {
+                freddyState = 1;
                 document.getElementById('freddy-door').style.display = 'block';
             }
 
-            // DER TODES-CHECK (2 Sekunden)
-            if(freddyAtDoor && !doorClosed) {
-                reactionTimer++;
-                if(reactionTimer >= 4) { // 4 Ticks = ca. 2 Sekunden
-                    triggerDeath();
+            // Der "2 Sekunden" Check
+            if(freddyState === 1 && !isDoorClosed) {
+                biteTimer++;
+                // Kiefer bewegt sich leicht vor dem Biss
+                document.getElementById('jaw').style.bottom = "-30px";
+                
+                if(biteTimer >= 4) { // 2 Sekunden (4 * 500ms)
+                    triggerBite();
                 }
             } else {
-                reactionTimer = 0;
+                biteTimer = 0;
+                document.getElementById('jaw').style.bottom = "-20px";
             }
-        }, 500);
-    }
-
-    function triggerDeath() {
-        // Kopf-Abbeiß Animation
-        document.getElementById('player-head').classList.add('bite-anim');
-        
-        setTimeout(() => {
-            document.getElementById('scare-overlay').style.display = 'flex';
-            document.body.style.animation = "flicker 0.05s infinite";
-            setTimeout(() => location.reload(), 2000);
         }, 500);
     }
 
     function toggleDoor() {
-        doorClosed = !doorClosed;
+        isDoorClosed = !isDoorClosed;
         document.getElementById('door-l').classList.toggle('closed');
-        if(doorClosed && freddyAtDoor) {
-            freddyAtDoor = false;
+        if(isDoorClosed && freddyState === 1) {
+            freddyState = 0;
             document.getElementById('freddy-door').style.display = 'none';
-            document.getElementById('stage-freddy').style.display = 'block';
         }
     }
 
-    function toggleCam() {
-        camOpen = !camOpen;
-        document.getElementById('monitor').style.display = camOpen ? 'block' : 'none';
+    function triggerBite() {
+        const jsc = document.getElementById('jumpscare-container');
+        const pHead = document.getElementById('p-head');
+        const bJaw = document.getElementById('bottom-jaw');
+        
+        jsc.style.display = 'flex';
+        
+        // Biss-Animation (Kiefer klappt zu)
+        setTimeout(() => {
+            bJaw.style.transform = "rotateX(-60deg)"; // Zubeißen
+            pHead.style.display = 'none'; // Kopf weg
+            spawnBlood(); // Blut spritzen
+            
+            // Schüttel-Effekt
+            document.body.style.animation = "glitch 0.05s infinite";
+            
+            setTimeout(() => {
+                alert("THE BITE OF '26 - DU BIST TOT.");
+                location.reload();
+            }, 2000);
+        }, 200);
+    }
+
+    function spawnBlood() {
+        const box = document.getElementById('blood-box');
+        for(let i=0; i<30; i++) {
+            const drop = document.createElement('div');
+            drop.className = 'blood-drop';
+            const x = (Math.random() - 0.5) * 300;
+            const y = (Math.random() - 0.5) * 300;
+            drop.style.setProperty('--x', x + 'px');
+            drop.style.setProperty('--y', y + 'px');
+            drop.style.animation = "spray 0.6s forwards";
+            box.appendChild(drop);
+        }
     }
 </script>
 </body>
