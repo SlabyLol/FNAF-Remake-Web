@@ -2,200 +2,345 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>FNAF: The Final Bite</title>
+    <title>Five Nights at Yellow's: Complete Edition</title>
     <style>
-        :root { --freddy: #4b2e2e; --yellow: #ffd700; --blood: #8a0000; }
-        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; }
+        :root { 
+            --freddy: #4b2e2e; --bonnie: #4b0082; --yellow: #ffd700; 
+            --bg-dark: #050505; --ui-green: #0f0; 
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: 'Courier New', monospace; color: white; overflow: hidden; user-select: none; }
 
         /* --- MENÜ --- */
-        #menu {
-            position: fixed; width: 100%; height: 100%; background: #000;
-            z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            border: 20px double #200; box-sizing: border-box;
+        #menu, #win-screen, #game-over {
+            position: fixed; width: 100%; height: 100%; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
         }
-        .title { font-size: 5rem; color: #800; text-shadow: 0 0 20px red; animation: glitch 0.2s infinite; }
-        @keyframes glitch { 0% { transform: skew(2deg); } 50% { transform: skew(-2deg); opacity: 0.8; } 100% { transform: skew(0); } }
+        .title { font-size: 4rem; color: #a00; text-shadow: 0 0 10px red; margin-bottom: 50px; }
+        .btn-large { padding: 20px 50px; font-size: 2rem; background: #222; color: #fff; border: 3px solid #500; cursor: pointer; transition: 0.2s; }
+        .btn-large:hover { background: #500; }
+        
+        #win-screen, #game-over { display: none; }
+        .win-text { font-size: 8rem; color: var(--ui-green); text-shadow: 0 0 20px var(--ui-green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
         /* --- BÜRO --- */
-        #game-view { display: none; width: 100vw; height: 100vh; position: relative; background: #111; }
+        #game-container { display: none; width: 100%; height: 100%; position: relative; }
         #office {
-            width: 1000px; height: 600px; margin: auto; position: relative;
-            background: linear-gradient(to bottom, #1a1a1a, #050505);
-            border: 10px solid #222; overflow: hidden;
+            width: 900px; height: 600px; margin: 20px auto; position: relative;
+            background: linear-gradient(#111, #000); border: 8px solid #333; overflow: hidden;
+            box-shadow: inset 0 0 150px #000;
         }
 
-        /* Gelber Charakter von hinten */
-        #player {
-            position: absolute; bottom: 50px; left: 450px; width: 120px; height: 150px; z-index: 10;
-        }
-        .p-head { width: 60px; height: 60px; background: var(--yellow); border-radius: 50%; margin: 0 auto; position: relative; }
-        .p-body { width: 90px; height: 100px; background: var(--yellow); border-radius: 20px 20px 0 0; margin: -5px auto; }
-
-        /* --- FREDDY AN DER TÜR --- */
-        #freddy-door {
-            position: absolute; left: 0; bottom: 50px; width: 250px; height: 400px;
-            display: none; z-index: 5;
-        }
-        .freddy-head { width: 120px; height: 100px; background: var(--freddy); border-radius: 30px; position: relative; }
-        .freddy-jaw { width: 120px; height: 40px; background: #2b1d14; position: absolute; bottom: -20px; border-radius: 0 0 20px 20px; transition: 0.1s; }
-
-        /* --- JUMPSCARE ANIMATION --- */
-        #jumpscare-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: none; z-index: 1000; justify-content: center; align-items: center;
-            background: #000;
-        }
-        .attacker { position: relative; transform: scale(3); }
-        .bite-top { width: 100px; height: 60px; background: var(--freddy); border-radius: 30px 30px 0 0; }
-        .bite-bottom { width: 100px; height: 40px; background: #2b1d14; border-radius: 0 0 20px 20px; transform-origin: top; }
-        
-        .blood-drop {
-            position: absolute; width: 10px; height: 10px; background: var(--blood);
-            border-radius: 50%; opacity: 0;
-        }
-
-        @keyframes bite-action {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-30px) scale(1.2); }
-            100% { transform: translateY(0); }
-        }
-        @keyframes spray {
-            0% { transform: translate(0,0); opacity: 1; }
-            100% { transform: translate(var(--x), var(--y)); opacity: 0; }
-        }
-
-        /* --- TÜR & UI --- */
-        .door { position: absolute; left: 0; width: 200px; height: 100%; background: #333; z-index: 20; transform: translateY(-100%); transition: 0.2s; border-right: 5px solid #111; }
+        /* Türen */
+        .door-frame { position: absolute; top: 0; width: 150px; height: 100%; background: #000; border: 2px solid #222; }
+        .door-frame.left { left: 0; } .door-frame.right { right: 0; }
+        .door { width: 100%; height: 100%; background: #333; border-bottom: 10px solid #111; transition: 0.3s; transform: translateY(-100%); }
         .door.closed { transform: translateY(0); }
-        #ui { position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; }
-        .btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid red; cursor: pointer; font-family: 'Courier New'; }
+
+        /* Fenster (für Animatronics) */
+        .window { position: absolute; top: 150px; width: 100px; height: 150px; background: #0a0a0a; border: 5px solid #222; }
+        .window.left { left: 160px; } .window.right { right: 160px; }
+
+        /* Monster an den Türen */
+        .monster-door { position: absolute; bottom: 0; width: 100%; height: 100px; border-radius: 20px 20px 0 0; display: none; }
+        #bonnie-door { background: var(--bonnie); }
+        #freddy-door { background: var(--freddy); }
+        .glowing-eyes { content: ''; width: 15px; height: 15px; background: red; border-radius: 50%; position: absolute; top: 20px; box-shadow: 0 0 15px red; }
+
+        /* Spieler am Schreibtisch */
+        #desk { position: absolute; bottom: 0; left: 200px; width: 500px; height: 120px; background: #2a2a2a; border-top: 5px solid #444; z-index: 10; }
+        #player { position: absolute; bottom: 40px; left: 400px; width: 100px; height: 140px; z-index: 15; }
+        #p-head { width: 60px; height: 60px; background: var(--yellow); border-radius: 50%; margin: 0 auto; transition: 0.1s; }
+        .p-body { width: 80px; height: 90px; background: var(--yellow); border-radius: 20px 20px 0 0; margin: -5px auto; }
+
+        /* --- KAMERA SYSTEM --- */
+        #camera-system {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,20,0,0.95); z-index: 50; display: none;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.1) 3px);
+        }
+        #cam-view { width: 700px; height: 400px; margin: 20px auto; border: 5px solid #333; background: #111; position: relative; display: flex; justify-content: center; align-items: center; }
+        
+        /* Map & Buttons */
+        #cam-map { position: absolute; bottom: 100px; right: 50px; width: 250px; height: 200px; border: 2px solid white; background: rgba(255,255,255,0.1); padding: 10px; }
+        .cam-btn { position: absolute; background: #333; color: white; border: 1px solid white; padding: 5px 10px; cursor: pointer; font-weight: bold; }
+        .cam-btn.active { background: var(--ui-green); color: black; }
+        #c-1A { top: 10px; left: 100px; } /* Stage */
+        #c-1B { top: 70px; left: 100px; } /* Dining */
+        #c-2A { bottom: 20px; left: 10px; } /* Left Hall */
+        #c-2B { bottom: 20px; right: 10px; } /* Right Hall */
+
+        /* Animatronics auf den Kameras */
+        .cam-monster { width: 50px; height: 80px; position: absolute; bottom: 20px; border-radius: 10px 10px 0 0; }
+        #cam-freddy { background: var(--freddy); left: 40%; }
+        #cam-bonnie { background: var(--bonnie); left: 55%; }
+
+        /* --- UI STEUERUNG --- */
+        #ui-bar { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 30px; z-index: 100; }
+        .ctrl-btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid var(--ui-green); cursor: pointer; font-size: 1.2rem; }
+        .ctrl-btn:hover { background: var(--ui-green); color: #000; }
+        .stats { font-size: 1.5rem; color: white; margin-top: 10px; }
+        .power-red { color: red; animation: pulse 1s infinite; }
+
+        /* --- JUMPSCARE (THE BITE) --- */
+        #jumpscare-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 5000; display: none; justify-content: center; align-items: center;
+        }
+        #scare-jaw-top { width: 400px; height: 200px; background: #222; border-radius: 100px 100px 0 0; position: relative; }
+        #scare-jaw-bottom { width: 400px; height: 100px; background: #111; border-radius: 0 0 50px 50px; transition: transform 0.1s; transform-origin: top; }
+        .blood-drop { position: absolute; width: 15px; height: 15px; background: #a00; border-radius: 50%; opacity: 0; }
+        @keyframes bite-shake { 0% { transform: translate(10px, 10px); } 50% { transform: translate(-10px, -10px); } 100% { transform: translate(0, 0); } }
+        @keyframes blood-spray { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(0.5); opacity: 0; } }
     </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1 class="title">THE BITE OF '26</h1>
-    <button class="btn" onclick="initGame()">START NIGHT</button>
+    <h1 class="title">FIVE NIGHTS AT YELLOW'S<br><span style="font-size: 2rem; color: #666;">THE BITE OF '26</span></h1>
+    <button class="btn-large" onclick="startGame()">START SURVIVAL</button>
 </div>
 
-<div id="game-view">
+<div id="game-container">
+    
     <div id="office">
-        <div id="door-l" class="door"></div>
+        <div class="door-frame left"><div id="door-left" class="door"></div></div>
+        <div class="window left"><div id="bonnie-door" class="monster-door"><div class="glowing-eyes" style="left:20px;"></div><div class="glowing-eyes" style="right:20px;"></div></div></div>
         
-        <div id="freddy-door">
-            <div class="freddy-head">
-                <div style="width:15px; height:15px; background:red; border-radius:50%; position:absolute; top:30px; left:20px; box-shadow: 0 0 10px red;"></div>
-                <div style="width:15px; height:15px; background:red; border-radius:50%; position:absolute; top:30px; right:20px; box-shadow: 0 0 10px red;"></div>
-                <div class="freddy-jaw" id="jaw"></div>
-            </div>
-        </div>
+        <div class="door-frame right"><div id="door-right" class="door"></div></div>
+        <div class="window right"><div id="freddy-door" class="monster-door"><div class="glowing-eyes" style="left:20px;"></div><div class="glowing-eyes" style="right:20px;"></div></div></div>
 
         <div id="player">
-            <div id="p-head" class="p-head"></div>
+            <div id="p-head"></div>
             <div class="p-body"></div>
         </div>
+        <div id="desk"></div>
     </div>
 
-    <div id="jumpscare-container">
-        <div class="attacker" id="attacker">
-            <div class="bite-top"></div>
-            <div id="blood-box"></div>
-            <div class="bite-bottom" id="bottom-jaw"></div>
+    <div id="camera-system">
+        <h2 style="text-align:center; color:var(--ui-green); margin-top:20px;">MONITOR ONLINE</h2>
+        <div id="cam-view">
+            <h1 id="room-name" style="position:absolute; top:10px; left:10px; color:white; opacity:0.5;">CAM 1A - SHOW STAGE</h1>
+            <div id="cam-freddy" class="cam-monster"></div>
+            <div id="cam-bonnie" class="cam-monster"></div>
+        </div>
+        <div id="cam-map">
+            <div class="cam-btn active" id="c-1A" onclick="switchCam('1A', 'SHOW STAGE')">CAM 1A</div>
+            <div class="cam-btn" id="c-1B" onclick="switchCam('1B', 'DINING ROOM')">CAM 1B</div>
+            <div class="cam-btn" id="c-2A" onclick="switchCam('2A', 'WEST HALL (LEFT)')">CAM 2A</div>
+            <div class="cam-btn" id="c-2B" onclick="switchCam('2B', 'EAST HALL (RIGHT)')">CAM 2B</div>
         </div>
     </div>
 
-    <div id="ui">
-        <button class="btn" onclick="toggleDoor()">TÜR ZU/AUF</button>
-        <div style="color:white; font-size:1.5rem;">POWER: <span id="pwr-val">100</span>% | TIME: <span id="time-val">12</span> AM</div>
+    <div id="ui-bar">
+        <button class="ctrl-btn" onclick="toggleDoor('left')">TÜR LINKS</button>
+        <button class="ctrl-btn" onclick="toggleCamera()">MONITOR</button>
+        <button class="ctrl-btn" onclick="toggleDoor('right')">TÜR RECHTS</button>
+        <div class="stats">POWER: <span id="pow-val">100</span>% | TIME: <span id="time-val">12</span> AM</div>
+    </div>
+
+    <div id="jumpscare-layer">
+        <div id="scare-monster" style="text-align: center;">
+            <div id="scare-jaw-top">
+                <div style="width:30px;height:30px;background:red;border-radius:50%;position:absolute;top:100px;left:100px;box-shadow:0 0 50px red;"></div>
+                <div style="width:30px;height:30px;background:red;border-radius:50%;position:absolute;top:100px;right:100px;box-shadow:0 0 50px red;"></div>
+            </div>
+            <div id="scare-jaw-bottom"></div>
+        </div>
+        <div id="blood-container" style="position: absolute; top:50%; left:50%;"></div>
     </div>
 </div>
 
-<script>
-    let pwr = 100;
-    let time = 12;
-    let isDoorClosed = false;
-    let freddyState = 0; // 0: Weg, 1: An der Tür
-    let biteTimer = 0;
+<div id="win-screen"><div class="win-text">6 AM</div><p style="font-size: 2rem;">YOU SURVIVED.</p><br><button class="btn-large" onclick="location.reload()">MENU</button></div>
+<div id="game-over"><h1 class="title">THE BITE...</h1><p style="font-size: 2rem;" id="death-reason">Du wurdest gefressen.</p><br><button class="btn-large" onclick="location.reload()">RETRY</button></div>
 
-    function initGame() {
+<script>
+    // --- SPIEL VARIABLEN ---
+    let power = 100;
+    let time = 12;
+    let gameActive = false;
+    let doorL = false, doorR = false, camOpen = false;
+    let currentCam = '1A';
+    
+    // AI Positionen: '1A', '1B', '2A'/'2B', 'door', 'office'
+    let bonniePos = '1A'; 
+    let freddyPos = '1A';
+    let attackTimer = { bonnie: 0, freddy: 0 }; // Zeit an der offenen Tür
+
+    // --- GAME LOOP ---
+    function startGame() {
         document.getElementById('menu').style.display = 'none';
-        document.getElementById('game-view').style.display = 'flex';
-        runLogic();
+        document.getElementById('game-container').style.display = 'block';
+        gameActive = true;
+        updateCams();
+
+        // 1. Energie & Zeit Loop (Jede Sekunde)
+        setInterval(() => {
+            if(!gameActive) return;
+            
+            // Zeit (ca. 60 Sekunden = 1 Ingame-Stunde)
+            if(Math.random() > 0.85) { // Beschleunigt für Gameplay-Test
+                if(time === 12) time = 1; else time++;
+                document.getElementById('time-val').innerText = time;
+                if(time === 6) winGame();
+            }
+
+            // Stromverbrauch berechnen
+            let drain = 0.5; // Basis
+            if(doorL) drain += 1.0;
+            if(doorR) drain += 1.0;
+            if(camOpen) drain += 0.8;
+            
+            power -= drain;
+            let powEl = document.getElementById('pow-val');
+            powEl.innerText = Math.floor(power);
+            
+            if(power <= 20) powEl.classList.add('power-red');
+            if(power <= 0) powerOutage();
+
+        }, 1000);
+
+        // 2. AI Loop (Bewegung alle 3 Sekunden)
+        setInterval(() => {
+            if(!gameActive) return;
+            moveAI();
+            checkDoors();
+            updateCams();
+        }, 3000);
     }
 
-    function runLogic() {
-        setInterval(() => {
-            // Strom & Zeit
-            pwr -= (isDoorClosed ? 0.4 : 0.1);
-            document.getElementById('pwr-val').innerText = Math.floor(pwr);
-            if(pwr <= 0) location.reload();
+    // --- AI LOGIK ---
+    function moveAI() {
+        // Bonnie (Linksrum)
+        if(Math.random() > 0.4) {
+            if(bonniePos === '1A') bonniePos = '1B';
+            else if(bonniePos === '1B') bonniePos = '2A';
+            else if(bonniePos === '2A') bonniePos = 'door';
+        }
+        // Freddy (Rechtsrum)
+        if(Math.random() > 0.5) { // Freddy ist etwas langsamer
+            if(freddyPos === '1A') freddyPos = '1B';
+            else if(freddyPos === '1B') freddyPos = '2B';
+            else if(freddyPos === '2B') freddyPos = 'door';
+        }
+    }
 
-            // Freddy erscheint zufällig
-            if(Math.random() > 0.96 && freddyState === 0) {
-                freddyState = 1;
-                document.getElementById('freddy-door').style.display = 'block';
-            }
+    function checkDoors() {
+        // Bonnie an der linken Tür
+        if(bonniePos === 'door') {
+            document.getElementById('bonnie-door').style.display = 'block';
+            if(!doorL) attackTimer.bonnie++;
+            else { bonniePos = '1B'; attackTimer.bonnie = 0; document.getElementById('bonnie-door').style.display = 'none'; } // Abgewehrt
+        }
+        
+        // Freddy an der rechten Tür
+        if(freddyPos === 'door') {
+            document.getElementById('freddy-door').style.display = 'block';
+            if(!doorR) attackTimer.freddy++;
+            else { freddyPos = '1B'; attackTimer.freddy = 0; document.getElementById('freddy-door').style.display = 'none'; } // Abgewehrt
+        }
 
-            // Der "2 Sekunden" Check
-            if(freddyState === 1 && !isDoorClosed) {
-                biteTimer++;
-                // Kiefer bewegt sich leicht vor dem Biss
-                document.getElementById('jaw').style.bottom = "-30px";
-                
-                if(biteTimer >= 4) { // 2 Sekunden (4 * 500ms)
-                    triggerBite();
-                }
-            } else {
-                biteTimer = 0;
-                document.getElementById('jaw').style.bottom = "-20px";
-            }
+        // Tödlicher Biss nach ~2 Ticks an offener Tür
+        if(attackTimer.bonnie >= 2) executeBite('bonnie');
+        if(attackTimer.freddy >= 2) executeBite('freddy');
+    }
+
+    // --- STEUERUNG ---
+    function toggleDoor(side) {
+        if(!gameActive || power <= 0) return;
+        if(side === 'left') {
+            doorL = !doorL;
+            document.getElementById('door-left').className = doorL ? 'door closed' : 'door';
+        } else {
+            doorR = !doorR;
+            document.getElementById('door-right').className = doorR ? 'door closed' : 'door';
+        }
+    }
+
+    function toggleCamera() {
+        if(!gameActive || power <= 0) return;
+        camOpen = !camOpen;
+        document.getElementById('camera-system').style.display = camOpen ? 'block' : 'none';
+        updateCams();
+    }
+
+    function switchCam(id, name) {
+        currentCam = id;
+        document.querySelectorAll('.cam-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('c-'+id).classList.add('active');
+        document.getElementById('room-name').innerText = `CAM ${id} - ${name}`;
+        updateCams();
+    }
+
+    function updateCams() {
+        // Blendet Monster auf der aktuellen Kamera ein/aus
+        document.getElementById('cam-bonnie').style.display = (bonniePos === currentCam) ? 'block' : 'none';
+        document.getElementById('cam-freddy').style.display = (freddyPos === currentCam) ? 'block' : 'none';
+    }
+
+    // --- EVENTS (Jumpscare, Win, Loss) ---
+    function executeBite(monster) {
+        gameActive = false;
+        camOpen = false;
+        document.getElementById('camera-system').style.display = 'none';
+        
+        const layer = document.getElementById('jumpscare-layer');
+        const topJaw = document.getElementById('scare-jaw-top');
+        const bottomJaw = document.getElementById('scare-jaw-bottom');
+        const pHead = document.getElementById('p-head');
+        
+        // Färbe Kiefer je nach Monster
+        topJaw.style.backgroundColor = monster === 'bonnie' ? 'var(--bonnie)' : 'var(--freddy)';
+        
+        layer.style.display = 'flex';
+        document.getElementById('scare-monster').style.animation = "bite-shake 0.05s infinite";
+
+        // Zubeißen!
+        setTimeout(() => {
+            bottomJaw.style.transform = "translateY(-50px) rotateX(40deg)"; // Klappt zu
+            pHead.style.display = 'none'; // Spieler Kopf weg
+            createBlood();
+            
+            setTimeout(() => {
+                layer.style.display = 'none';
+                document.getElementById('game-over').style.display = 'flex';
+                document.getElementById('death-reason').innerText = `${monster.toUpperCase()} hat deinen Kopf gefressen.`;
+            }, 1500);
         }, 500);
     }
 
-    function toggleDoor() {
-        isDoorClosed = !isDoorClosed;
-        document.getElementById('door-l').classList.toggle('closed');
-        if(isDoorClosed && freddyState === 1) {
-            freddyState = 0;
-            document.getElementById('freddy-door').style.display = 'none';
-        }
-    }
-
-    function triggerBite() {
-        const jsc = document.getElementById('jumpscare-container');
-        const pHead = document.getElementById('p-head');
-        const bJaw = document.getElementById('bottom-jaw');
-        
-        jsc.style.display = 'flex';
-        
-        // Biss-Animation (Kiefer klappt zu)
-        setTimeout(() => {
-            bJaw.style.transform = "rotateX(-60deg)"; // Zubeißen
-            pHead.style.display = 'none'; // Kopf weg
-            spawnBlood(); // Blut spritzen
-            
-            // Schüttel-Effekt
-            document.body.style.animation = "glitch 0.05s infinite";
-            
-            setTimeout(() => {
-                alert("THE BITE OF '26 - DU BIST TOT.");
-                location.reload();
-            }, 2000);
-        }, 200);
-    }
-
-    function spawnBlood() {
-        const box = document.getElementById('blood-box');
-        for(let i=0; i<30; i++) {
-            const drop = document.createElement('div');
+    function createBlood() {
+        const container = document.getElementById('blood-container');
+        for(let i = 0; i < 40; i++) {
+            let drop = document.createElement('div');
             drop.className = 'blood-drop';
-            const x = (Math.random() - 0.5) * 300;
-            const y = (Math.random() - 0.5) * 300;
+            let x = (Math.random() - 0.5) * 600;
+            let y = (Math.random() - 0.5) * 600;
             drop.style.setProperty('--x', x + 'px');
             drop.style.setProperty('--y', y + 'px');
-            drop.style.animation = "spray 0.6s forwards";
-            box.appendChild(drop);
+            drop.style.animation = "blood-spray 0.8s forwards";
+            container.appendChild(drop);
         }
+    }
+
+    function powerOutage() {
+        gameActive = false;
+        camOpen = false;
+        doorL = false; doorR = false;
+        document.getElementById('door-left').className = 'door';
+        document.getElementById('door-right').className = 'door';
+        document.getElementById('camera-system').style.display = 'none';
+        document.getElementById('office').style.background = '#000'; // Licht aus
+        
+        setTimeout(() => {
+            executeBite('freddy'); // Freddy holt dich im Dunkeln
+        }, 3000);
+    }
+
+    function winGame() {
+        gameActive = false;
+        document.getElementById('game-container').style.display = 'none';
+        document.getElementById('win-screen').style.display = 'flex';
     }
 </script>
 </body>
