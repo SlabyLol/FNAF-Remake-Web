@@ -2,242 +2,199 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FNAF Pure CSS/JS Remake</title>
+    <title>FNAF Ultimate Web Remake</title>
     <style>
-        :root {
-            --office-bg: #1a1a1a;
-            --door-color: #333;
-            --freddy-color: #4b2e2e;
+        :root { --bg: #050505; --metal: #222; --freddy: #4b2e2e; }
+        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; color: #fff; }
+
+        #game-view {
+            width: 100vw; height: 100vh; position: relative;
+            display: flex; justify-content: center; align-items: center;
         }
 
-        body {
-            background: #000;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: 'Courier New', Courier, monospace;
-            color: #0f0;
-            overflow: hidden;
-        }
-
-        #game-container {
-            width: 800px;
-            height: 500px;
-            background: var(--office-bg);
-            position: relative;
-            border: 4px solid #444;
-            box-shadow: 0 0 50px rgba(0,0,0,1) inset;
-        }
-
-        /* --- BÜRO DESIGN (CSS ART) --- */
+        /* --- DAS BÜRO (3D LOOK) --- */
         #office {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            display: flex;
-            justify-content: center;
+            width: 1000px; height: 600px; background: #111;
+            position: relative; border: 10px solid #222;
+            perspective: 1000px; overflow: hidden;
+            box-shadow: inset 0 0 200px #000;
         }
 
-        .wall-detail {
-            position: absolute;
-            width: 100px; height: 150px;
-            background: #222; bottom: 100px; left: 50px;
-            border: 2px solid #111;
+        .wall { position: absolute; background: #1a1a1a; border: 1px solid #111; }
+        .left-wall { width: 200px; height: 100%; left: 0; transform: rotateY(45deg); background: linear-gradient(to right, #000, #222); }
+        .right-wall { width: 200px; height: 100%; right: 0; transform: rotateY(-45deg); background: linear-gradient(to left, #000, #222); }
+        
+        #desk { 
+            position: absolute; bottom: 0; width: 600px; height: 150px; 
+            left: 200px; background: #222; border-top: 5px solid #333;
+            z-index: 5;
         }
 
-        #desk {
-            position: absolute;
-            bottom: 0; width: 400px; height: 100px;
-            background: #333; border-top: 5px solid #444;
-        }
-
-        #fan {
-            width: 40px; height: 40px;
-            background: #111; border-radius: 50%;
-            position: absolute; top: -50px; left: 180px;
-            animation: spin 0.1s linear infinite;
-        }
-
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* --- DIE TÜR --- */
-        #door-left {
-            position: absolute; left: 0; top: 0;
-            width: 80px; height: 100%;
-            background: var(--door-color);
-            transition: transform 0.3s ease-in;
-            z-index: 10;
-            border-right: 5px solid #000;
-        }
-
-        .door-closed { transform: translateY(0); }
-        .door-open { transform: translateY(-100%); }
-
-        /* --- DER ANIMALTRONIC (FREDDY) --- */
+        /* --- ANIMATRONIC (BÄR MIT GLIEDMASSEN) --- */
         #freddy {
-            width: 60px; height: 80px;
-            background: var(--freddy-color);
-            position: absolute;
-            left: 10px; bottom: 100px;
-            border-radius: 20px 20px 0 0;
-            display: none; /* Nur sichtbar wenn er da ist */
+            position: absolute; bottom: 120px; left: 50px;
+            width: 120px; height: 250px; z-index: 2;
+            display: none; transform: scale(0.8);
         }
-        #freddy::before { content: '👁️ 👁️'; display: block; text-align: center; padding-top: 10px; }
+        .f-head { width: 60px; height: 60px; background: var(--freddy); border-radius: 20px; position: relative; margin: 0 auto; }
+        .f-ear { width: 20px; height: 20px; background: var(--freddy); position: absolute; top: -10px; border-radius: 50%; }
+        .f-body { width: 80px; height: 100px; background: var(--freddy); border-radius: 30px; margin: -5px auto; position: relative; }
+        .f-arm { width: 20px; height: 80px; background: var(--freddy); position: absolute; top: 10px; border-radius: 10px; }
+        .f-leg { width: 25px; height: 100px; background: var(--freddy); position: absolute; bottom: -80px; border-radius: 10px; }
+        
+        .eye { width: 10px; height: 10px; background: #fff; border-radius: 50%; position: absolute; top: 20px; animation: glow 1s infinite; }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 5px red; } 50% { box-shadow: 0 0 15px red; } }
 
-        /* --- UI & KAMERAS --- */
-        #ui {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(0,0,0,0.7); padding: 10px;
-            pointer-events: none;
+        /* --- TÜREN --- */
+        .door {
+            position: absolute; width: 150px; height: 100%; background: #333;
+            z-index: 10; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid #111;
         }
+        #door-l { left: 0; transform: translateY(-100%); }
+        #door-l.closed { transform: translateY(0); }
 
-        #cam-overlay {
+        /* --- KAMERA SYSTEM --- */
+        #cam-monitor {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 20, 0, 0.8);
-            display: none; z-index: 20;
-            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.1) 3px);
+            background: #001a00; z-index: 50; display: none;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.05) 3px);
         }
+        .static { position: absolute; width: 100%; height: 100%; opacity: 0.1; background: url('https://media.giphy.com/media/oEI9uWUqWMrBK/giphy.gif'); }
 
-        .controls {
-            position: absolute; bottom: 20px; width: 100%;
-            display: flex; justify-content: center; gap: 20px;
-            z-index: 30;
-        }
+        /* --- UI & ANIMATIONEN --- */
+        #ui { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 50px; z-index: 100; }
+        .btn { padding: 15px 30px; background: #222; border: 2px solid #555; color: white; cursor: pointer; }
+        .btn:active { background: #555; }
 
-        button {
-            background: #222; color: #0f0; border: 2px solid #0f0;
-            padding: 10px; cursor: pointer; font-weight: bold;
-        }
-
-        /* --- JUMPSCARE --- */
         #jumpscare {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: red; display: none; z-index: 100;
-            justify-content: center; align-items: center;
-            font-size: 5rem; color: white; animation: shake 0.1s infinite;
+            position: fixed; top:0; left:0; width:100%; height:100%; background:red;
+            display:none; z-index:1000; justify-content:center; align-items:center;
         }
-
-        @keyframes shake { 0% { transform: translate(5px); } 50% { transform: translate(-5px); } }
+        
+        #win-screen {
+            position: fixed; top:0; left:0; width:100%; height:100%; background:#000;
+            display:none; z-index:2000; flex-direction:column; justify-content:center; align-items:center;
+            font-size: 5rem; color: #fff;
+        }
+        .am6-anim { animation: time-slide 2s ease-out; }
+        @keyframes time-slide { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div id="game-container">
+<div id="game-view">
     <div id="office">
-        <div id="door-left" class="door-open"></div>
-        <div id="freddy"></div>
-        <div class="wall-detail"></div>
-        <div id="desk">
-            <div id="fan"></div>
+        <div class="left-wall wall"></div>
+        <div class="right-wall wall"></div>
+        <div id="door-l" class="door"></div>
+        
+        <div id="freddy">
+            <div class="f-head">
+                <div class="f-ear" style="left:-5px"></div>
+                <div class="f-ear" style="right:-5px"></div>
+                <div class="eye" style="left:10px"></div>
+                <div class="eye" style="right:10px"></div>
+            </div>
+            <div class="f-body">
+                <div class="f-arm" style="left:-25px; transform: rotate(10deg)"></div>
+                <div class="f-arm" style="right:-25px; transform: rotate(-10deg)"></div>
+                <div class="f-leg" style="left:5px"></div>
+                <div class="f-leg" style="right:5px"></div>
+            </div>
         </div>
+
+        <div id="desk"></div>
     </div>
 
-    <div id="cam-overlay">
-        <h2 style="text-align: center;">KAMERA ANSICHT - <span id="cam-id">1A</span></h2>
-        <div id="cam-content" style="text-align: center; margin-top: 100px; font-size: 1.5rem;">
-            Alles ruhig...
-        </div>
+    <div id="cam-monitor">
+        <div class="static"></div>
+        <h1 style="color:#0f0; margin:20px;">CAM 01: SHOW STAGE</h1>
+        <div id="cam-info" style="font-size:2rem; text-align:center; margin-top:100px;">ANIMATRONIC GESICHTET</div>
     </div>
 
     <div id="ui">
-        STROM: <span id="pow">100</span>%<br>
-        ZEIT: <span id="time">12</span> AM
-    </div>
-
-    <div id="jumpscare">RAAAAAAAH!</div>
-
-    <div class="controls">
-        <button onclick="toggleDoor()">TÜR</button>
-        <button onclick="toggleCams()">KAMERA</button>
+        <div>STROM: <span id="pwr">100</span>%</div>
+        <button class="btn" onmousedown="toggleDoor()">TÜR</button>
+        <button class="btn" onmousedown="toggleCam()">MONITOR</button>
+        <div>ZEIT: <span id="tm">12</span> AM</div>
     </div>
 </div>
 
+<div id="jumpscare"><h1>RAAAAAAAHHH!!!</h1></div>
+<div id="win-screen">
+    <div class="am6-anim">5 AM</div>
+    <div class="am6-anim" id="six">6 AM</div>
+</div>
+
 <script>
-    let power = 100;
+    let pwr = 100;
     let time = 12;
-    let isDoorClosed = false;
-    let isCamOpen = false;
-    let freddyStage = 0; // 0: Bühne, 1: Flur, 2: Vor der Tür
+    let door = false;
+    let cam = false;
+    let aiPos = 0; // 0: Weg, 1: Kamera, 2: Vor der Tür
 
-    // 1. Strom & Zeit
-    const mainLoop = setInterval(() => {
-        // Zeit
-        if (Math.random() > 0.98) {
-            time++;
-            if (time > 12) time = 1;
-            document.getElementById('time').innerText = time;
-            if (time === 6) win();
-        }
-
+    // Spiel-Logik
+    const gameLoop = setInterval(() => {
         // Strom
-        let usage = 0.05;
-        if (isDoorClosed) usage += 0.15;
-        if (isCamOpen) usage += 0.1;
-        power -= usage;
-        document.getElementById('pow').innerText = Math.floor(power);
+        pwr -= (0.05 + (door ? 0.2 : 0) + (cam ? 0.15 : 0));
+        document.getElementById('pwr').innerText = Math.floor(pwr);
+        if(pwr <= 0) gameOver("STROM AUS");
 
-        if (power <= 0) gameOver("Stromausfall...");
-    }, 500);
+        // Zeit (Alle 45 Sek eine Stunde)
+        if(Math.random() > 0.99) {
+            time = (time === 12) ? 1 : time + 1;
+            document.getElementById('tm').innerText = time;
+            if(time === 6) win();
+        }
+    }, 200);
 
-    // 2. Animatronic Logik
+    // AI Bewegung
     setInterval(() => {
-        if (Math.random() > 0.7) {
-            freddyStage++;
-            updateAI();
-        }
-    }, 4000);
-
-    function updateAI() {
-        const freddyDiv = document.getElementById('freddy');
-        const camText = document.getElementById('cam-content');
-
-        if (freddyStage === 2) {
-            freddyDiv.style.display = 'block'; // Freddy ist an der Tür
-            camText.innerText = "KAMERA LEER...";
-        } else if (freddyStage >= 3) {
-            if (isDoorClosed) {
-                freddyStage = 0;
-                freddyDiv.style.display = 'none';
-                console.log("Abgewehrt!");
-            } else {
-                jumpscare();
+        if(Math.random() > 0.6) {
+            aiPos++;
+            if(aiPos === 1) {
+                document.getElementById('cam-info').innerText = "BÜHNE LEER!";
             }
-        } else {
-            camText.innerText = "FREDDY IST AUF DER BÜHNE";
+            if(aiPos === 2) {
+                document.getElementById('freddy').style.display = 'block';
+            }
+            if(aiPos === 3) {
+                if(door) {
+                    aiPos = 0;
+                    document.getElementById('freddy').style.display = 'none';
+                } else {
+                    jumpscare();
+                }
+            }
         }
-    }
+    }, 5000);
 
-    // 3. Aktionen
     function toggleDoor() {
-        isDoorClosed = !isDoorClosed;
-        const door = document.getElementById('door-left');
-        door.className = isDoorClosed ? 'door-closed' : 'door-open';
+        door = !door;
+        document.getElementById('door-l').classList.toggle('closed');
     }
 
-    function toggleCams() {
-        isCamOpen = !isCamOpen;
-        document.getElementById('cam-overlay').style.display = isCamOpen ? 'block' : 'none';
+    function toggleCam() {
+        cam = !cam;
+        document.getElementById('cam-monitor').style.display = cam ? 'block' : 'none';
     }
 
     function jumpscare() {
         document.getElementById('jumpscare').style.display = 'flex';
-        clearInterval(mainLoop);
+        clearInterval(gameLoop);
         setTimeout(() => location.reload(), 2000);
     }
 
-    function gameOver(reason) {
-        alert("GAME OVER: " + reason);
-        location.reload();
+    function win() {
+        document.getElementById('win-screen').style.display = 'flex';
+        clearInterval(gameLoop);
     }
 
-    function win() {
-        alert("6 AM - GEWONNEN!");
+    function gameOver(msg) {
+        alert(msg);
         location.reload();
     }
 </script>
-
 </body>
 </html>
