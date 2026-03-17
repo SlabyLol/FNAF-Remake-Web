@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNAF Pure CSS/JS Remake</title>
+    <style>
+        :root {
+            --office-bg: #1a1a1a;
+            --door-color: #333;
+            --freddy-color: #4b2e2e;
+        }
+
+        body {
+            background: #000;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', Courier, monospace;
+            color: #0f0;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 800px;
+            height: 500px;
+            background: var(--office-bg);
+            position: relative;
+            border: 4px solid #444;
+            box-shadow: 0 0 50px rgba(0,0,0,1) inset;
+        }
+
+        /* --- BÜRO DESIGN (CSS ART) --- */
+        #office {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .wall-detail {
+            position: absolute;
+            width: 100px; height: 150px;
+            background: #222; bottom: 100px; left: 50px;
+            border: 2px solid #111;
+        }
+
+        #desk {
+            position: absolute;
+            bottom: 0; width: 400px; height: 100px;
+            background: #333; border-top: 5px solid #444;
+        }
+
+        #fan {
+            width: 40px; height: 40px;
+            background: #111; border-radius: 50%;
+            position: absolute; top: -50px; left: 180px;
+            animation: spin 0.1s linear infinite;
+        }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* --- DIE TÜR --- */
+        #door-left {
+            position: absolute; left: 0; top: 0;
+            width: 80px; height: 100%;
+            background: var(--door-color);
+            transition: transform 0.3s ease-in;
+            z-index: 10;
+            border-right: 5px solid #000;
+        }
+
+        .door-closed { transform: translateY(0); }
+        .door-open { transform: translateY(-100%); }
+
+        /* --- DER ANIMALTRONIC (FREDDY) --- */
+        #freddy {
+            width: 60px; height: 80px;
+            background: var(--freddy-color);
+            position: absolute;
+            left: 10px; bottom: 100px;
+            border-radius: 20px 20px 0 0;
+            display: none; /* Nur sichtbar wenn er da ist */
+        }
+        #freddy::before { content: '👁️ 👁️'; display: block; text-align: center; padding-top: 10px; }
+
+        /* --- UI & KAMERAS --- */
+        #ui {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.7); padding: 10px;
+            pointer-events: none;
+        }
+
+        #cam-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 20, 0, 0.8);
+            display: none; z-index: 20;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,0,0.1) 3px);
+        }
+
+        .controls {
+            position: absolute; bottom: 20px; width: 100%;
+            display: flex; justify-content: center; gap: 20px;
+            z-index: 30;
+        }
+
+        button {
+            background: #222; color: #0f0; border: 2px solid #0f0;
+            padding: 10px; cursor: pointer; font-weight: bold;
+        }
+
+        /* --- JUMPSCARE --- */
+        #jumpscare {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: red; display: none; z-index: 100;
+            justify-content: center; align-items: center;
+            font-size: 5rem; color: white; animation: shake 0.1s infinite;
+        }
+
+        @keyframes shake { 0% { transform: translate(5px); } 50% { transform: translate(-5px); } }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="office">
+        <div id="door-left" class="door-open"></div>
+        <div id="freddy"></div>
+        <div class="wall-detail"></div>
+        <div id="desk">
+            <div id="fan"></div>
+        </div>
+    </div>
+
+    <div id="cam-overlay">
+        <h2 style="text-align: center;">KAMERA ANSICHT - <span id="cam-id">1A</span></h2>
+        <div id="cam-content" style="text-align: center; margin-top: 100px; font-size: 1.5rem;">
+            Alles ruhig...
+        </div>
+    </div>
+
+    <div id="ui">
+        STROM: <span id="pow">100</span>%<br>
+        ZEIT: <span id="time">12</span> AM
+    </div>
+
+    <div id="jumpscare">RAAAAAAAH!</div>
+
+    <div class="controls">
+        <button onclick="toggleDoor()">TÜR</button>
+        <button onclick="toggleCams()">KAMERA</button>
+    </div>
+</div>
+
+<script>
+    let power = 100;
+    let time = 12;
+    let isDoorClosed = false;
+    let isCamOpen = false;
+    let freddyStage = 0; // 0: Bühne, 1: Flur, 2: Vor der Tür
+
+    // 1. Strom & Zeit
+    const mainLoop = setInterval(() => {
+        // Zeit
+        if (Math.random() > 0.98) {
+            time++;
+            if (time > 12) time = 1;
+            document.getElementById('time').innerText = time;
+            if (time === 6) win();
+        }
+
+        // Strom
+        let usage = 0.05;
+        if (isDoorClosed) usage += 0.15;
+        if (isCamOpen) usage += 0.1;
+        power -= usage;
+        document.getElementById('pow').innerText = Math.floor(power);
+
+        if (power <= 0) gameOver("Stromausfall...");
+    }, 500);
+
+    // 2. Animatronic Logik
+    setInterval(() => {
+        if (Math.random() > 0.7) {
+            freddyStage++;
+            updateAI();
+        }
+    }, 4000);
+
+    function updateAI() {
+        const freddyDiv = document.getElementById('freddy');
+        const camText = document.getElementById('cam-content');
+
+        if (freddyStage === 2) {
+            freddyDiv.style.display = 'block'; // Freddy ist an der Tür
+            camText.innerText = "KAMERA LEER...";
+        } else if (freddyStage >= 3) {
+            if (isDoorClosed) {
+                freddyStage = 0;
+                freddyDiv.style.display = 'none';
+                console.log("Abgewehrt!");
+            } else {
+                jumpscare();
+            }
+        } else {
+            camText.innerText = "FREDDY IST AUF DER BÜHNE";
+        }
+    }
+
+    // 3. Aktionen
+    function toggleDoor() {
+        isDoorClosed = !isDoorClosed;
+        const door = document.getElementById('door-left');
+        door.className = isDoorClosed ? 'door-closed' : 'door-open';
+    }
+
+    function toggleCams() {
+        isCamOpen = !isCamOpen;
+        document.getElementById('cam-overlay').style.display = isCamOpen ? 'block' : 'none';
+    }
+
+    function jumpscare() {
+        document.getElementById('jumpscare').style.display = 'flex';
+        clearInterval(mainLoop);
+        setTimeout(() => location.reload(), 2000);
+    }
+
+    function gameOver(reason) {
+        alert("GAME OVER: " + reason);
+        location.reload();
+    }
+
+    function win() {
+        alert("6 AM - GEWONNEN!");
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
